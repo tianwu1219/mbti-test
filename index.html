@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MBTI 深度人格測驗（含職涯與優缺點分析）</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif; }
+    body { background-color: #fdf6ec; color: #4a3b32; padding: 24px 16px; line-height: 1.65; }
+    .container { max-width: 740px; margin: 0 auto; background: #fffdf9; padding: 32px 28px; border-radius: 20px; box-shadow: 0 8px 30px rgba(196, 137, 78, 0.08); border: 1px solid #f7e8d3; }
+    h1 { text-align: center; color: #8c532b; margin-bottom: 8px; font-size: 26px; }
+    .subtitle { text-align: center; color: #a47148; font-size: 14px; margin-bottom: 28px; }
+    .question-block { margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid #faeedd; }
+    .question-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #5c3e29; }
+    .option-label { display: flex; align-items: center; background: #faf3ea; border: 1px solid #f2e1cf; padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; cursor: pointer; font-size: 14px; color: #533e2d; transition: all 0.2s ease; }
+    .option-label:hover { background: #f5e7d5; border-color: #e5c9ad; transform: translateY(-1px); }
+    .option-label input { margin-right: 12px; cursor: pointer; accent-color: #c97a3e; width: 16px; height: 16px; }
+    .btn { display: block; width: 100%; background: #d97736; color: #ffffff; border: none; padding: 14px; font-size: 16px; font-weight: 700; border-radius: 12px; cursor: pointer; transition: 0.2s; margin-top: 12px; box-shadow: 0 4px 12px rgba(217, 119, 54, 0.25); }
+    .btn:hover { background: #c26425; box-shadow: 0 6px 16px rgba(217, 119, 54, 0.35); }
+    .error-msg { color: #c2410c; text-align: center; margin-top: 14px; font-size: 14px; display: none; font-weight: 500; }
+    #result-box { display: none; padding: 8px 0; }
+    .result-header { text-align: center; margin-bottom: 28px; }
+    .result-type { font-size: 44px; font-weight: 800; color: #c26425; letter-spacing: 3px; }
+    .result-title { font-size: 19px; color: #7c4a27; margin-top: 6px; font-weight: 600; }
+    .card { background: #faf4ec; border: 1px solid #f0e0ce; border-radius: 14px; padding: 18px 22px; margin-bottom: 18px; }
+    .card h3 { font-size: 16px; color: #8c532b; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .card p { font-size: 14.5px; color: #5a4332; line-height: 1.7; }
+    .btn-secondary { background: #b8a898; color: #fff; margin-top: 24px; box-shadow: none; }
+    .btn-secondary:hover { background: #9d8c7c; box-shadow: none; }
+
+    /* 本機紀錄專用樣式 */
+    .history-card { margin-top: 28px; border-top: 2px dashed #eedac5; padding-top: 20px; }
+    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .history-title { font-size: 16px; font-weight: 700; color: #8c532b; }
+    .btn-clear { background: transparent; border: 1px solid #c9a98e; color: #8c532b; font-size: 12px; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+    .btn-clear:hover { background: #f2dec8; }
+    .history-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .history-item { background: #faf3ea; border: 1px solid #eddccc; border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 13.5px; }
+    .history-date { color: #8a705e; }
+    .history-res { font-weight: 700; color: #c26425; }
+    .history-empty { text-align: center; color: #a48570; font-size: 13px; padding: 12px 0; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div id="quiz-box">
+    <h1>MBTI 深度人格測驗【最新版】</h1>
+    <p class="subtitle">請先選擇測驗題數。題數越多，結果通常越穩定；請依照直覺與平常的真實習慣作答</p>
+    <div id="count-select" class="card" style="text-align:center; margin-bottom:18px;">
+      <h3>🔢 你想測幾題？</h3>
+      <p style="margin:8px 0 14px; color:#8a705e;">每個人格向度都會平均分配題目</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+        <button type="button" class="btn count-btn" data-count="16">16 題<br><small>快速測驗</small></button>
+        <button type="button" class="btn count-btn" data-count="24">24 題<br><small>標準測驗</small></button>
+        <button type="button" class="btn count-btn" data-count="36">36 題<br><small>完整測驗</small></button>
+      </div>
+      <p id="selected-count" style="margin-top:12px; color:#c26425; font-weight:700;"></p>
+    </div>
+    <div id="questions-container" style="display:none;"></div>
+    <button id="submit-btn" class="btn">查看分析結果</button>
+    <p id="error-text" class="error-msg">還有題目尚未作答完成，請往上確認並填寫完畢喔！</p>
+  </div>
+
+  <div id="result-box">
+    <div class="result-header">
+      <div id="res-type" class="result-type"></div>
+      <div id="res-name" class="result-title"></div>
+      <div id="res-score-detail" style="font-size: 13px; color: #a47148; margin-top: 6px;"></div>
+    </div>
+    
+    <div class="card">
+      <h3>🌟 性格特質與長處</h3>
+      <p id="res-strengths"></p>
+    </div>
+
+    <div class="card">
+      <h3>⚠️ 潛在短板與盲點</h3>
+      <p id="res-weaknesses"></p>
+    </div>
+
+    <div class="card">
+      <h3>💼 適合發展的工作方向</h3>
+      <p id="res-careers"></p>
+    </div>
+
+    <!-- 本機歷史紀錄區塊 -->
+    <div class="history-card">
+      <div class="history-header">
+        <span class="history-title">📜 歷史測驗紀錄（本機儲存）</span>
+        <button id="clear-history-btn" class="btn-clear">清除紀錄</button>
+      </div>
+      <ul id="history-list" class="history-list"></ul>
+    </div>
+
+    <button id="restart-btn" class="btn btn-secondary">重新測驗</button>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const STORAGE_KEY = "mbti_quiz_history";
+
+  // 建立 36 題題庫（每個向度 9 題）
+  const rawQuestions = [
+    // EI
+    { t: "1. 經過一整週忙碌課業後，週末你最想怎麼放鬆？", dim: "EI", a: "非常想約一群朋友出門玩", b: "偏向找一兩位好友聚聚", c: "偏期待待在家看書或打遊戲", d: "完全不想社交，需要徹底獨處充電" },
+    { t: "2. 在陌生的新環境或聚會場合中，你的狀態通常是：", dim: "EI", a: "非常主動，很快就能認識大家", b: "滿隨和的，有人搭話就能熱絡聊", c: "多半待在熟人旁，很少主動找生人", d: "感到不自在，只想默默待在角落" },
+    { t: "3. 腦中有一個新點子時，你習慣怎麼做？", dim: "EI", a: "立刻找人講出來，邊講邊釐清", b: "稍微想一下就迫不及待找人討論", c: "自己先默默想好架構才考慮分享", d: "全程內部消化，極少主動跟人提起" },
+    { t: "4. 長時間待在熱鬧且人多的公共場合後：", dim: "EI", a: "精神百倍，覺得整個人充滿活力", b: "心情不錯，雖然微累但很滿足", c: "覺得社交電量偏低，想趕快回家靜靜", d: "電量徹底歸零，感到筋疲力盡" },
+    { t: "5. 團體或課堂討論需要大家發表意見時：", dim: "EI", a: "總是搶先舉手或開口表達看法", b: "氣氛需要時很樂意主動發言", c: "通常先聽大家講，被點到名才回答", d: "非必要絕不主動說話，讓別人發言" },
+    { t: "6. 當你遇到困難或心情低落時：", dim: "EI", a: "馬上找朋友傾訴，說出來就舒坦了", b: "傳訊息找親近的人聊聊尋求陪伴", c: "自己聽音樂或散步，想先冷靜消化", d: "完全不想跟任何人講話，自己沉澱" },
+    { t: "7. 在朋友圈或社團裡，大家對你的第一印象通常是：", dim: "EI", a: "外向活潑、熱情有朝氣的開心果", b: "親切好聊、容易親近相處的人", c: "沉穩內斂、話不多但細心的傾聽者", d: "安靜神祕、熟了才會展現真性情" },
+    // SN
+    { t: "8. 學習一項新技能時，你更喜歡哪種引導方式？", dim: "SN", a: "每一步都有清晰的手冊與範例示範", b: "偏向看具體步驟，跟著模仿實作", c: "偏向先理解核心架構原理再動手", d: "只要給大概念，剩下自己自由探索" },
+    { t: "9. 當你望著窗外發呆時，腦海裡通常在想些什麼？", dim: "SN", a: "剛才發生的具體事件或待會要做的事", b: "眼前看到的街景、天氣與身旁事物", c: "聯想到某個有趣的點子或未來可能", d: "天馬行空的奇想、哲學或奇幻畫面" },
+    { t: "10. 在做重要決定時，你最相信的是：", dim: "SN", a: "親身體會的實際經驗與現有數據", b: "可靠的前人做法與既成事實", c: "內心的直覺預感與事情長遠潛力", d: "強烈的第六感以及宏觀的洞察願景" },
+    { t: "11. 介紹一部電影時，你通常會著重於：", dim: "SN", a: "具體的情節脈絡、角色與事件發展", b: "關鍵故事進展與刺激好看的名場面", c: "它帶給你的深刻啟發與隱含意義", d: "探討核心哲理、世界觀與思想隱喻" },
+    { t: "12. 面對繁瑣的細節核對工作時：", dim: "SN", a: "得心應手，能專注在細節且不易漏", b: "按部就班核對，可以耐著性子做好", c: "容易恍神，想快點把大方向搞定就好", d: "極度不耐煩，總想直接抓整體概貌" },
+    { t: "13. 你更喜歡思考哪一種類型的問題？", dim: "SN", a: "眼前立刻能派上用場的實用解法", b: "看得到摸得著、有前例可循的課題", c: "十年後世界會變成什麼樣的未來題", d: "宇宙本質、哲學等抽象且無標準答案的問題" },
+    { t: "14. 當別人講話兜圈子、用很多抽象比喻時：", dim: "SN", a: "很想打斷他，希望他直接講具體重點", b: "稍微覺得累，希望對方快點拿出實例", c: "覺得滿有意思，能抓到背後暗示", d: "非常享受這種充滿想像空間的談話" },
+    // TF
+    { t: "15. 朋友向你訴苦遇到挫折時，你的第一反應是：", dim: "TF", a: "冷靜分析前因後果，直接給出解法", b: "客觀指出問題關鍵，提出改善建議", c: "先表達同理關心，安撫情緒再看對策", d: "全力給予溫暖的情緒支持與陪伴" },
+    { t: "16. 團隊合作意見分歧時，你最看重的是：", dim: "TF", a: "方案合不合邏輯、效能與效益高不高", b: "客觀事實真相，不怕衝突據理力爭", c: "組員感受，用客氣委婉的方式調和", d: "和諧氣氛，極力避免爭執傷害彼此" },
+    { t: "17. 評判一件事的對錯時，你更傾向依據：", dim: "TF", a: "公平客觀的規則標準，不該因人設事", b: "既有準則常理，盡量少摻雜個人私情", c: "情理兼顧，考量每個人當下的特殊處境", d: "同理心與善意，人情永遠比規則重要" },
+    { t: "18. 當你不得不提出批評或修改意見時：", dim: "TF", a: "直話直說，清楚指出缺點才是真幫他", b: "直接講重點，但語氣保持平實中立", c: "先稱讚再委婉點出問題，照顧對方自尊", d: "非常糾結猶豫，很怕對方受傷難過" },
+    { t: "19. 你最受不了別人對你有哪種評價？", dim: "TF", a: "「這人邏輯混亂、講話完全不講理」", b: "「這人做事抓不到重點、沒有效率」", c: "「這人不通人情世故、缺乏人情味」", d: "「這人冷酷自私、不懂體諒他人難處」" },
+    { t: "20. 看感人催淚的電影時，你的反應通常是：", dim: "TF", a: "內心冷靜，甚至在分析劇情邏輯合不合理", b: "明白很感人，但很少真的掉下眼淚", c: "容易被情緒牽動，覺得鼻酸或感動", d: "徹底代入主角心境，常跟著哭得稀里嘩啦" },
+    { t: "21. 如果必須在「客觀真理」與「人際和諧」中取捨：", dim: "TF", a: "堅持捍衛真理，即使得罪人也不妥協", b: "堅持正確原則，但語氣盡量保持克制", c: "適度退讓，若講真話破壞關係就換種說法", d: "優先保護感情和睦，不為對錯傷了關係" },
+    // JP
+    { t: "22. 面對重要大考或大專案任務時：", dim: "JP", a: "訂好詳細進度表，按部就班提前完成", b: "大致規劃時程區間，盡量不拖到最後", c: "看心情靈感推進，靠近死線時效率最高", d: "不到最後關頭不動筆，享受壓線爆發感" },
+    { t: "23. 出門旅遊或放假出遊時：", dim: "JP", a: "精確排好時間表與食宿景點才安心", b: "排好主要景點與住宿，保留部分彈性", c: "只抓大方向，當天醒來再看想去哪", d: "不做攻略，走到哪算哪，享受未知驚喜" },
+    { t: "24. 原定計畫突然被臨時打亂時：", dim: "JP", a: "感到煩躁焦慮，討厭節奏被意外破壞", b: "需時間平復情緒，盡快重擬新方案", c: "適應很快，覺得隨遇而安無所謂", d: "覺得滿刺激的，喜歡這種臨時應變感" },
+    { t: "25. 你的書桌、房間或個人空間狀態：", dim: "JP", a: "井然有序，物品都有固定位置且隨時整潔", b: "大致整齊，看不下去時會定期整理", c: "在外人看來略亂，但自己找得到東西", d: "自由隨性，雜物堆疊，大掃除才整理" },
+    { t: "26. 當你做出一項決定之後：", dim: "JP", a: "塵埃落定，心裡踏實並立刻著手推進", b: "大致定案，開始朝這個方向準備", c: "保持觀望，隨時準備視情況調整方向", d: "不喜歡太早敲定，想持續保留各種可能性" },
+    { t: "27. 面對沒有時間限制、自由發揮的題目：", dim: "JP", a: "給自己設好結構與死線，不想懸在那裡", b: "先框出完成節奏，避免無限期拖延", c: "慢慢摸索靈感，有感覺才動手製作", d: "超享受漫長發想，拖多久都不感到焦慮" },
+    { t: "28. 有一個完全沒有安排行程的週末：", dim: "JP", a: "起床前就想好要完成哪些待辦事項", b: "大致想好兩三件要做的事，按步完成", c: "起床後看心情想做什麼就做什麼", d: "澈底放空躺平，完全不想被任何目標約束" },
+    { t: "29. 和朋友一起參加活動，現場突然多了很多不熟的人：", dim: "EI", a: "很快就主動認識新朋友，覺得很有趣", b: "有人來聊天就自然加入，氣氛好也會多說一點", c: "先陪熟悉的人，觀察一陣子再決定要不要加入", d: "比較想待在熟人身邊，除非必要不主動認識人" },
+    { t: "30. 一個人完成一件很有成就感的事後，你通常會：", dim: "EI", a: "馬上找人分享，別人的反應會讓我更開心", b: "很想跟熟悉的人說一聲，分享一下成果", c: "自己開心一下就好，不一定會特別告訴別人", d: "更享受安靜地把成就感留給自己" },
+    { t: "31. 老師只給一個模糊主題，讓你自由完成作業時：", dim: "SN", a: "希望老師給明確要求與範例，這樣比較好開始", b: "會先找一些具體資料或參考作品再做", c: "覺得可以自由發揮，先想整體概念與方向", d: "最喜歡這種沒有標準答案、可以天馬行空的題目" },
+    { t: "32. 朋友描述一次很久以前的旅行時，你最容易記住：", dim: "SN", a: "去了哪些地方、吃了什麼、發生了哪些具體事情", b: "一些印象很深的場景、人物或細節", c: "那趟旅行帶來的感受與意義", d: "從旅行延伸出的想法、聯想或人生體會" },
+    { t: "33. 同學的疏忽讓整組成績受到影響，你會先：", dim: "TF", a: "先找出問題在哪裡，討論怎麼補救最有效", b: "把責任與原因釐清，再一起想公平的處理方式", c: "先確認那位同學是不是遇到了什麼狀況", d: "先安撫大家的情緒，再慢慢討論怎麼處理" },
+    { t: "34. 朋友問你「你覺得我換這個造型好不好？」時：", dim: "TF", a: "直接說我認為好不好，重點是給真實意見", b: "會委婉指出優缺點，希望對方得到有用的建議", c: "先看朋友在意的是什麼，再用不傷人的方式回答", d: "如果朋友很期待，我會優先鼓勵他、讓他開心" },
+    { t: "35. 一個活動提前兩週公布，但目前沒有要求你排好細節：", dim: "JP", a: "我會先排出完整時間表，早點準備比較安心", b: "會先列出幾個重要事項與期限，照著慢慢準備", c: "先記著日期就好，等接近一點再決定細節", d: "不太想先安排，當時看情況再處理比較自在" },
+    { t: "36. 原本安排好的行程突然多出一小時空檔，你會：", dim: "JP", a: "立刻想好這一小時要做什麼，照計畫利用掉", b: "看看原本還有哪些事情可以提前完成", c: "臨時找個想做的事，想到什麼就做什麼", d: "完全不安排，享受突然多出來的自由時間" }
+  ];
+
+  // 16 種人格解析資料庫
+  const infoData = {
+    "ISTJ": { name: "嚴謹負責的檢查員", s: "專注度極高、重視紀律守信、辦事踏實可靠、條理分明。", w: "容易墨守成規、對突發變動適應較慢、偶爾顯得嚴肅不通融。", c: "會計審計、公職行政、工程管理、法律事務、資料分析師。" },
+    "ISFJ": { name: "溫暖貼心的守護者", s: "細膩周到、忠誠可靠、極具責任感、擅長照顧與支持團隊。", w: "過度承擔他人責任、不善於拒絕別人、容易把委屈往心裡吞。", c: "醫療護理、教育輔導、行政管理、人力資源、社會工作。" },
+    "INFJ": { name: "洞察深遠的提倡者", s: "直覺敏銳、同理心強大、具備遠見、熱切追求內在價值與理想。", w: "完美主義傾向重、容易過度消耗心理能量、對批評相對敏感。", c: "心理諮商、作家/編劇、哲學人文、教育家、非營利組織規劃。" },
+    "INTJ": { name: "深謀遠慮的策劃者", s: "邏輯嚴密、戰略思維頂尖、獨立自主、追求極致的效率與卓越。", w: "容易顯得自負傲慢、對他人情緒缺乏耐心、對細瑣日常較不耐煩。", c: "軟體架構、戰略顧問、科學研究、金融投資、系統分析師。" },
+    "ISTP": { name: "冷靜靈活的實踐家", s: "動手能力強、危機應變極佳、善於拆解機械原理、冷靜理性。", w: "難以長久維持承諾、對人際溝通較冷淡、不喜受規則長篇約束。", c: "軟體開發/資安、機械工程、急診醫療、飛行駕駛、技術技師。" },
+    "ISFP": { name: "溫和靈動的藝術家", s: "審美直覺敏銳、包容力強、熱愛當下美好、真誠善良且不具侵略性。", w: "抗壓性相對偏弱、排斥長期規劃、遇到爭端時習慣退縮逃避。", c: "視覺設計、藝術插畫、攝影剪輯、景觀園藝、音樂創作。" },
+    "INFP": { name: "溫柔真誠的調停者", s: "理想崇高、同理心充沛、想像力豐富、對自我價值觀堅定不移。", w: "容易陷入情緒內耗、行動力有時跟不上想法、容易過度理想化。", c: "文學寫作、心理諮詢、創意企劃、翻譯、自由工作者。" },
+    "INTP": { name: "追求真理的思想家", s: "思考極具原創性、邏輯拆解能力強、對未知原理充滿求知欲。", w: "想多做少易拖延、說話偶爾過於直白挑刺、容易忽略他人情緒。", c: "演算法工程、科學理論研究、哲學探討、數據科學家、系統研發。" },
+    "ESTP": { name: "活力敏捷的挑戰者", s: "行動力超群、談判與應變靈活、觀察周遭即時變化極為敏銳。", w: "容易衝動冒險、耐心較不足、排斥繁瑣理論與長篇大論的規範。", c: "商務談判、專案業務、危機公關、運動教練、創業家。" },
+    "ESFP": { name: "光芒四射的表演者", s: "親和力十足、極具舞台感染力、善於炒熱氣氛、熱愛分享歡樂。", w: "注意力容易分散、不喜深層嚴肅問題、花費與時間規劃較隨性。", c: "公關活動策劃、演藝主持、觀光休閒、行銷推廣、客戶關係。" },
+    "ENFP": { name: "熱情洋溢的探索者", s: "點子極多、充滿熱情感染力、善於啟發他人、極具創新開拓精神。", w: "容易三分鐘熱度、對瑣碎收尾工作缺乏耐心、情緒起伏較大。", c: "品牌行銷、廣告文案、自媒體創作、活動策展、創新顧問。" },
+    "ENTP": { name: "機智敏銳的辯論家", s: "腦袋反應飛快、幽默機靈、敢於打破框架挑戰現狀、思維靈活。", w: "喜歡爭辯易引發磨擦、執行落實常顯乏力、容易半途轉換跑道。", c: "創業顧問、產品經理、創投分析、政策智囊、辯護律師。" },
+    "ESTJ": { name: "果斷務實的管理者", s: "組織架構能力強、執行力果決、講求規則秩序、責任心極度堅定。", w: "控制欲較強、不擅理解非理性感受、容易顯得固執不知變通。", c: "企業專案主管、營運管理、軍警執法、工程監工、金融財務主管。" },
+    "ESFJ": { name: "熱心溫暖的領航員", s: "人際關係極佳、重視團體凝聚力、擅長打理後勤、體貼照顧他人。", w: "極度在意他人眼光與評價、害怕衝突、容易忽略自己的真實需求。", c: "公關接待、人力資源、教學教師、活動行政、客戶服務管理。" },
+    "ENFJ": { name: "鼓舞人心的主人公", s: "領袖魅力強大、善於凝聚眾人意志、極富同理心、能激發他人潛力。", w: "容易過度理想化他人、承攬太多別人的情緒負擔、過於想掌控大局。", c: "團隊主管、培訓導師、公眾演說家、非營利組織領袖、人力發展。" },
+    "ENTJ": { name: "雄心勃勃的指揮官", s: "大局觀清晰、決策雷厲風行、領導統御力卓越、勇於開疆闢土。", w: "容易顯得專斷強勢、缺乏同理耐心、常給身邊的人帶來巨大壓迫感。", c: "高階企業主管、創業創辦人、管理顧問、投資銀行家、政治領袖。" }
+  };
+
+  const container = document.getElementById('questions-container');
+  const submitBtn = document.getElementById('submit-btn');
+  const restartBtn = document.getElementById('restart-btn');
+  const clearHistoryBtn = document.getElementById('clear-history-btn');
+  const historyListEl = document.getElementById('history-list');
+  const errorText = document.getElementById('error-text');
+  const quizBox = document.getElementById('quiz-box');
+  const countSelect = document.getElementById('count-select');
+  const selectedCountText = document.getElementById('selected-count');
+  const countButtons = document.querySelectorAll('.count-btn');
+  let currentQuestions = [];
+  let selectedCount = 0;
+  const resultBox = document.getElementById('result-box');
+
+  // 讀取與渲染本機紀錄
+  function getHistory() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveHistoryItem(type, name) {
+    const list = getHistory();
+    const now = new Date();
+    const timeStr = `${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    
+    // 最多保存最新 10 筆
+    list.unshift({ time: timeStr, type: type, name: name });
+    if (list.length > 10) {
+      list.pop();
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+
+  function renderHistory() {
+    const list = getHistory();
+    historyListEl.innerHTML = '';
+    if (list.length === 0) {
+      const emptyLi = document.createElement('li');
+      emptyLi.className = 'history-empty';
+      emptyLi.textContent = '目前尚無歷史測驗紀錄';
+      historyListEl.appendChild(emptyLi);
+      return;
+    }
+
+    list.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'history-item';
+
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'history-date';
+      dateSpan.textContent = item.time;
+
+      const resSpan = document.createElement('span');
+      resSpan.className = 'history-res';
+      resSpan.textContent = `${item.type} (${item.name})`;
+
+      li.appendChild(dateSpan);
+      li.appendChild(resSpan);
+      historyListEl.appendChild(li);
+    });
+  }
+
+  // 清除本機紀錄
+  clearHistoryBtn.addEventListener('click', () => {
+    localStorage.removeItem(STORAGE_KEY);
+    renderHistory();
+  });
+
+  function shuffle(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const k = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[k]] = [copy[k], copy[i]];
+    }
+    return copy;
+  }
+
+  function startQuiz(count) {
+    selectedCount = count;
+    const perDimension = count / 4;
+    const dimensions = ['EI', 'SN', 'TF', 'JP'];
+    currentQuestions = dimensions.flatMap(dim =>
+      shuffle(rawQuestions.filter(q => q.dim === dim)).slice(0, perDimension)
+    );
+    currentQuestions = shuffle(currentQuestions);
+    selectedCountText.textContent = `已選擇 ${count} 題，現在開始作答！`;
+    countSelect.style.display = 'none';
+    container.style.display = 'block';
+    submitBtn.style.display = 'block';
+    errorText.style.display = 'none';
+    container.innerHTML = '';
+
+    currentQuestions.forEach((q, i) => {
+      const qDiv = document.createElement('div');
+      qDiv.className = 'question-block';
+      const titleEl = document.createElement('div');
+      titleEl.className = 'question-title';
+      titleEl.textContent = `${i + 1}. ${q.t.replace(/^\d+\.\s*/, '')}`;
+      qDiv.appendChild(titleEl);
+      const d1 = q.dim[0];
+      const d2 = q.dim[1];
+      const opts = shuffle([
+        { text: q.a, trait: d1, score: 2 },
+        { text: q.b, trait: d1, score: 1 },
+        { text: q.c, trait: d2, score: 1 },
+        { text: q.d, trait: d2, score: 2 }
+      ]);
+      opts.forEach(opt => {
+        const label = document.createElement('label');
+        label.className = 'option-label';
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = `q_${i}`;
+        radio.value = opt.trait;
+        radio.dataset.score = opt.score;
+        label.appendChild(radio);
+        label.appendChild(document.createTextNode(opt.text));
+        qDiv.appendChild(label);
+      });
+      container.appendChild(qDiv);
+    });
+  }
+
+  countButtons.forEach(btn => {
+    btn.addEventListener('click', () => startQuiz(Number(btn.dataset.count)));
+  });
+
+  // 計算並展示結果（依實際分數計算 + 寫入本機紀錄）
+  submitBtn.addEventListener('click', () => {
+    let answered = 0;
+
+    currentQuestions.forEach((_, i) => {
+      const checked = document.querySelector(`input[name="q_${i}"]:checked`);
+      if (checked) {
+        answered++;
+      }
+    });
+
+    if (answered < currentQuestions.length) {
+      errorText.style.display = 'block';
+      return;
+    }
+
+    errorText.style.display = 'none';
+
+    // 依作答累積各維度分數並計算結果
+    const scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+    currentQuestions.forEach((q, i) => {
+      const checked = document.querySelector(`input[name="q_${i}"]:checked`);
+      if (!checked) return;
+      scores[checked.value] += Number(checked.dataset.score);
+    });
+
+    const type = [
+      scores.E >= scores.I ? 'E' : 'I',
+      scores.S >= scores.N ? 'S' : 'N',
+      scores.T >= scores.F ? 'T' : 'F',
+      scores.J >= scores.P ? 'J' : 'P'
+    ].join('');
+
+    const info = infoData[type] || infoData["ESTJ"];
+
+    document.getElementById('res-type').textContent = type;
+    document.getElementById('res-name').textContent = info ? info.name : "";
+
+    // 顯示各人格向度比例，讓結果不只是一個四字母標籤
+    function percent(a, b) {
+      const total = a + b;
+      return total === 0 ? 50 : Math.round((a / total) * 100);
+    }
+    const ei = percent(scores.E, scores.I);
+    const sn = percent(scores.S, scores.N);
+    const tf = percent(scores.T, scores.F);
+    const jp = percent(scores.J, scores.P);
+    document.getElementById('res-score-detail').textContent =
+      `傾向比例：E ${ei}% / I ${100 - ei}% ｜ S ${sn}% / N ${100 - sn}% ｜ T ${tf}% / F ${100 - tf}% ｜ J ${jp}% / P ${100 - jp}%`;
+    document.getElementById('res-strengths').textContent = info ? info.s : "";
+    document.getElementById('res-weaknesses').textContent = info ? info.w : "";
+    document.getElementById('res-careers').textContent = info ? info.c : "";
+
+    // 儲存並更新本機紀錄
+    saveHistoryItem(type, info ? info.name : "");
+    renderHistory();
+
+    quizBox.style.display = 'none';
+    resultBox.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // 重新測驗：回到題數選擇
+  restartBtn.addEventListener('click', () => {
+    currentQuestions = [];
+    selectedCount = 0;
+    container.innerHTML = '';
+    container.style.display = 'none';
+    submitBtn.style.display = 'none';
+    errorText.style.display = 'none';
+    selectedCountText.textContent = '';
+    countSelect.style.display = 'block';
+    resultBox.style.display = 'none';
+    quizBox.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // 初始狀態：先選題數
+  submitBtn.style.display = 'none';
+});
+</script>
+</body>
+</html>
